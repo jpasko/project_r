@@ -3,6 +3,8 @@ if (!process.env.NODE_ENV) {
     // If developing locally, get credentials from local file.
     AWS.config.loadFromPath('./.local/credentials.json');
 }
+AWS.config.update({region: 'us-east-1'});
+
 var db = new AWS.DynamoDB();
 var express = require('express');
 var app = express();
