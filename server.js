@@ -9,7 +9,7 @@ var app = express();
 var panam = true;
 
 app.get('/', function(request, response) {
-    response.send('Hello World');
+    response.send('Project R - GET /adspace/:id to retrieve an ad.');
 });
 
 app.get('/adspace/:id', function(request, response) {
@@ -29,6 +29,24 @@ app.get('/adspace/:id', function(request, response) {
 	});
     }
     panam = !panam;
+});
+
+app.get('/:id', function(request, response) {
+    var params = {
+	"TableName": "ProjectR",
+	"Key": {
+            "AdSpaceID": {
+		"N": request.params.id
+            }
+	}
+    };
+    db.getItem(params, function(err, data) {
+	if (err) {
+	    response.send('Error retrieving item');
+	} else {
+	    response.send(data.Item);
+	}
+    });
 });
 
 app.listen(process.env.PORT || 8888);
