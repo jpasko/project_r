@@ -1,26 +1,25 @@
 var AWS = require('aws-sdk');
 if (!process.env.NODE_ENV) {
+    // If developing locally, get credentials from local file.
     AWS.config.loadFromPath('./.local/credentials.json');
 }
 var db = new AWS.DynamoDB();
-db.listTables(function(err, data) {
-    console.log(data.TableNames);
-});
-
-var s3 = new AWS.S3();
-s3.listBuckets(function(err, data) {
-    for (var index in data.Buckets) {
-	var bucket = data.Buckets[index];
-	console.log("Bucket: ", bucket.Name, ' : ', bucket.CreationDate);
-    }
-});
-
-var http = require('http');
 var express = require('express');
 var app = express();
 
-http.createServer(function(request, response) {
-    response.writeHead(200, {"Content-Type": "text/plain"});
-    response.write("Hello World");
-    response.end();
-}).listen(process.env.PORT || 8888);
+app.get('/', function(request, response) {
+    response.send('Hello World');
+});
+
+app.get('/adspace/:id', function(request, response) {
+    response.send(
+	{
+	    "title": "Pan American",
+	    "text": "Overnight to Europe in your own private stateroom",
+	    "image": "https://s3.amazonaws.com/project-r/pan-am-logo.png",
+	    "link": "https://www.google.com"
+	});
+});
+
+app.listen(process.env.PORT || 8888);
+console.log('Server starting');
