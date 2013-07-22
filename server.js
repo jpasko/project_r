@@ -12,6 +12,17 @@ app.get('/', function(request, response) {
     response.send('Project R - GET /adspace/:id to retrieve an ad.');
 });
 
+app.get('/db', function(request, response) {
+    db.describeTable({"TableName": "ProjectR"}, function (err, data) {
+	if (err) {
+	    response.send(err);
+	} else {
+	    response.send(data);
+	}
+    });
+
+});
+
 app.get('/adspace/:id', function(request, response) {
     if (panam) {
 	response.send({
