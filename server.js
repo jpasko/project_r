@@ -55,7 +55,7 @@ app.get('/:id', function(request, response) {
     };
     db.getItem(params, function(err, data) {
 	if (err) {
-	    response.send('Error retrieving item');
+	    response.send(err);
 	} else {
 	    response.send(data.Item);
 	}
