@@ -11,7 +11,8 @@ var app = express();
 var panam = true;
 
 app.get('/', function(request, response) {
-    response.send('Project R - GET /adspace/:id to retrieve an ad.');
+    var env = process.env.NODE_ENV;
+    response.send('Project R - GET /adspace/:id to retrieve an ad.' + ' environment: ' + env);
 });
 
 app.get('/db', function(request, response) {
