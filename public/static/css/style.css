@@ -61,8 +61,13 @@ body {
     width: 50px;
 }
 
-#submit-message {
+#submit-message, #thank-you {
     display: none;
     color: white;
     text-align: center;
+    font-size: 1.2em;
+}
+
+#thank-you {
+    font-size: 1.5em;
 }
