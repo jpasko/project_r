@@ -1,0 +1,13 @@
+doctype 5
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/static/css/style.css')
+    script(type='text/javascript', src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js').
+    script(type='text/javascript', src='/static/js/landing.js').
+  body#landing-body
+    div#landing-email
+      div#email-input-wrapper
+        input#email-input(placeholder='email')
+        button#email-send send
+      p#submit-message

@@ -1,0 +1,14 @@
+{
+    "local": {
+	"s3_bucket": "project-r",
+	"table_name": "ProjectR"
+    },
+    "development": {
+	"s3_bucket": "project-r",
+	"table_name": "ProjectR"
+    },
+    "production": {
+	"s3_bucket": "project-r",
+	"table_name": "ProjectR"
+    }
+}
