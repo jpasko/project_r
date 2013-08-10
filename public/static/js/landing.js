@@ -1,5 +1,5 @@
 $( document ).ready(function() {
-    $("#email-send").on("click", function() {
+    $("#email-send").click(function() {
 	var email = $("#email-input").val();
 	$(this).attr("disabled", true);
 	$.ajax({
@@ -22,7 +22,14 @@ $( document ).ready(function() {
 	    }
 	});
     });
-    $("#email-input").on("focus", function() {
+    $("#email-input").focus(function() {
 	$("#submit-message").fadeOut();
+    });
+    $("#email-input").keyup(function() {
+        if (event.keyCode != 13) {
+	    $("#submit-message").fadeOut();
+        } else {
+	    $("#email-send").click();
+	}
     });
 });

@@ -36,7 +36,7 @@ exports.getAd = function(request, response) {
 		exports.parseAdQuery(
 		    data.Items[exports.getRandomInt(data.Count - 1)]));
 	} else {
-	    response.send( {"status": "404",
+	    response.send( {"status": 404,
 			    "message": "No such ad"} );
 	}
     });
@@ -89,7 +89,8 @@ exports.createAdSpace = function(request, response) {
 	if (err) {
 	    response.send(err);
 	} else {
-	    response.send( {"message": "Success",
+	    response.send( {"status": 200,
+			    "message": "Success",
 			    "AdSpaceID": adspace_id} );
 	}
     });
@@ -109,7 +110,7 @@ exports.createAd = function(request, response) {
 	if (err) {
 	    response.send(err);
 	} else if (exports.isEmpty(data)) {
-	    response.send( {"status": "fail",
+	    response.send( {"status": 400,
 			    "message": "AdSpace does not exist"} );
 	} else {
 	    params = {
@@ -165,7 +166,8 @@ exports.createAd = function(request, response) {
 			if (err) {
 			    response.send(err);
 			} else {
-			    response.send( {"message": "Success",
+			    response.send( {"status": 201,
+					    "message": "Success",
 					    "AdSpaceID": adSpaceID,
 					    "AdID": newAdID} );
 			}
@@ -209,7 +211,8 @@ exports.replaceAd = function(request, response) {
 	if (err) {
 	    response.send(err);
 	} else {
-	    response.send( {"message": "Success",
+	    response.send( {"status": 201,
+			    "message": "Success",
 			    "AdSpaceID": adSpaceID,
 			    "AdID": adID} );
 	}
@@ -261,11 +264,13 @@ exports.deleteAdSpace = function(request, response) {
 		if (err) {
 		    response.send(err);
 		} else {
-		    response.send( {"message": "Success"} );
+		    response.send( {"status": 200,
+				    "message": "Success"} );
 		}
 	    });
 	} else {
-	    response.send( {"message": "Success"} );
+	    response.send( {"status": 200,
+			    "message": "Success"} );
 	}
     });
 };
@@ -280,7 +285,8 @@ exports.deleteAd = function(request, response) {
 	if (err) {
 	    response.send(err);
 	} else {
-	    response.send( {"message": "Success"} );
+	    response.send( {"status": 200,
+			    "message": "Success"} );
 	}
     });
 };
