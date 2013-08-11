@@ -25,7 +25,7 @@ $( document ).ready(function() {
     $("#email-input").focus(function() {
 	$("#submit-message").fadeOut();
     });
-    $("#email-input").keyup(function() {
+    $("#email-input").keyup(function(event) {
         if (event.keyCode != 13) {
 	    $("#submit-message").fadeOut();
         } else {

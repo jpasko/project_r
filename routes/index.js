@@ -1,6 +1,7 @@
 /*
  * GET home page.
  */
-exports.index = function(req, res){
-    res.render('index', { title: 'AdCrafted', domain: req.app.get("domain") });
+exports.index = function(request, response){
+    response.render('index',
+		    {title: 'AdCrafted', domain: request.app.get("domain")});
 };
