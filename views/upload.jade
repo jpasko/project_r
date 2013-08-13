@@ -1,0 +1,10 @@
+extends layout
+
+block head
+  script(type='text/javascript', src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js').
+  script(type='text/javascript', src='/static/js/uploader.js').
+
+block content
+  form(action='.', method='post', enctype='multipart/form-data')
+    input#image-input(type='file', name='image', data-adspace='#{adSpace}', data-ad='#{ad}')
+    input#image-select(type='button', value='Select')

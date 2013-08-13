@@ -7,6 +7,40 @@
 // UUIDs are used as AdSpace identifiers.
 var uuid = require('node-uuid');
 
+// Get a single AdSpace.
+exports.getAdSpace = function(request, response) {
+    var db = response.app.get("db");
+    var params = exports.adSpaceParams(response.app.get("adspace_table_name"),
+				       request.params.adspace_id);
+    db.getItem(params, function(err, data) {
+	if (err) {
+	    response.send(err);
+	} else {
+	    response.send(exports.parseItem(data.Item));
+	}
+    });
+};
+
+// Get all AdSpaces.
+exports.getAllAdSpaces = function(request, response) {
+    var db = response.app.get("db");
+    var params = {
+	"TableName": response.app.get("adspace_table_name")
+    };
+    db.scan(params, function(err, data) {
+	if (err) {
+	    response.send(err);
+	} else {
+	    var result = {"Count": data.Count,
+			  "AdSpaces": []};
+	    for (var i = 0; i < data.Count; i++) {
+		result.AdSpaces[i] = exports.parseItem(data.Items[i]);
+	    }
+	    response.send(result);
+	}
+    });
+};
+
 // Get an Ad within an AdSpace specified by the id in the request params.
 // If no AdID is specified, a random ad is chosen.
 exports.getAd = function(request, response) {
@@ -314,6 +348,20 @@ exports.parseAdQuery = function(ad) {
 }
 
 /**
+ * Parses an item returned from a query.
+ */
+exports.parseItem = function(item) {
+    var result = {};
+    for (var attr in item) {
+	var attribute = item[attr];
+	var value = attribute["N"] ?
+	    attribute["N"] : attribute["S"] ? attribute["S"] : "null";
+	result[attr] = value;
+    }
+    return result;
+}
+
+/**
  * Generates a random integer in the range [0, max).
  */
 exports.getRandomInt = function(max) {
@@ -362,3 +410,10 @@ exports.adsParams = function(tableName, adSpaceID, adID) {
 	}
     };
 }
+
+// TEST
+exports.test = function(request, response) {
+    var s3 = response.app.get("s3");
+    s3.test();
+    response.send("TEST");
+};

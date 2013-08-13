@@ -71,3 +71,6 @@ body {
 #thank-you {
     font-size: 1.5em;
 }
+#image-input {
+    display: none;
+}

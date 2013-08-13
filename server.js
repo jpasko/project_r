@@ -28,14 +28,16 @@
 /**
  * Include modules here.
  */
-var express = require("express")
-  , AWS     = require("aws-sdk")
-  , routes  = require("./routes")
-  , ads     = require("./routes/ads")
-  , landing = require("./routes/landing")
-  , http    = require("http")
-  , path    = require("path")
-  , async   = require("async");
+var express    = require("express")
+  , AWS        = require("aws-sdk")
+  , ads        = require("./routes/ads")
+  , website    = require("./routes/website")
+  , landing    = require("./routes/landing")
+  , AWSManager = require("./utils/aws-manager")
+  , http       = require("http")
+  , fs         = require("fs")
+  , path       = require("path")
+  , async      = require("async");
 
 /**
  * Express application.
@@ -83,15 +85,17 @@ app.configure(function() {
     app.set("view engine", "jade");
     app.set("email_table", "AdCrafted-emails");
     app.set("db", new AWS.DynamoDB());
-    app.set("s3", new AWS.S3());
+    app.set("s3", new AWSManager.S3(new AWS.S3(), app.get("s3_bucket")));
+    app.set("fs", fs);
     // Error handler.
-    app.use(function(err, req, res, next){
+    app.use(function(err, request, response, next){
 	console.error(err.stack);
-	res.send(500, '500 - Error.');
+	response.send(500, '500 - Error.');
     });
     // 404 handler.
-    app.use(function(req, res, next){
-	res.send(404, '404 - Not Found.');
+    app.use(function(request, response, next){
+	//response.send(404, '404 - Not Found.');
+	response.render('404', {title: '404'});
     });
 });
 
@@ -99,38 +103,73 @@ app.configure(function() {
  * Initialize the Express application.
  */
 function init() {
-    // Render the home page.
-    app.get("/", routes.index);
+    // =========================================================================
+    // URLs for human-readable content in the browser.
+    // =========================================================================
 
-    // Retrieve a single ad from the specified AdSpace.  If no ad exists in
-    // the AdSpace, a 404 response is returned; if more than one ad exists,
-    // one is chosen at random.
-    app.get("/adspace/:adspace_id", ads.getAd);
+    // Render the landing page.
+    app.get("/", website.index);
 
-    // Get a specific ad from an AdSpace.
-    app.get("/adspace/:adspace_id/ad/:ad_id", ads.getAd);
+    // Show all AdSpaces and allow AdSpace creation.
+    // app.get("/adspaces", website.allAdSpaces);
 
-    // Retrieve a JSON representation for each ad in the specified AdSpace.
-    app.get("/adspace/:adspace_id/all", ads.getAllAds);
+    // Show all ads within a single AdSpace and allow ad creation as well as
+    // AdSpace deletion.
+    // app.get("/adspaces/:adspace_id", website.singleAdSpace);
+
+    // Show a single ad and allow modification and deletion.
+    // app.get("/adspaces/:adspace_id/ad/:ad_id", website.singleAd);
+
+    // =========================================================================
+    // The REST API.
+    // =========================================================================
+
+    // Get all AdSpaces.
+    app.get("/api/adspace", ads.getAllAdSpaces);
+
+    // Get a specific AdSpace.
+    app.get("/api/adspace/:adspace_id", ads.getAdSpace);
+
+    // Get all ads within the specified AdSpace.
+    app.get("/api/adspace/:adspace_id/ad", ads.getAllAds);
+
+    // Get a random ad from the specified AdSpace.
+    app.get("/api/adspace/:adspace_id/ad/random", ads.getAd);
+
+    // Get a specific ad from the specified AdSpace.
+    app.get("/api/adspace/:adspace_id/ad/:ad_id", ads.getAd);
 
     // Create a new AdSpace.
-    app.post("/adspace", ads.createAdSpace);
+    app.post("/api/adspace", ads.createAdSpace);
 
     // Create a new ad in the specified AdSpace.
-    app.post("/adspace/:adspace_id", ads.createAd);
+    app.post("/api/adspace/:adspace_id", ads.createAd);
 
-    // Replace the specified ad with a new one, or create one if it doesn't
-    // exist.
-    app.put("/adspace/:adspace_id/ad/:ad_id", ads.replaceAd);
+    // Update the specified ad, or create one if it doesn't exist.
+    app.put("/api/adspace/:adspace_id/ad/:ad_id", ads.replaceAd);
 
     // Delete an entire AdSpace and all ads it may reference.
-    app.del("/adspace/:adspace_id", ads.deleteAdSpace);
+    app.del("/api/adspace/:adspace_id", ads.deleteAdSpace);
 
     // Delete a specific ad without deleting the AdSpace.
-    app.del("/adspace/:adspace_id/ad/:ad_id", ads.deleteAd);
+    app.del("/api/adspace/:adspace_id/ad/:ad_id", ads.deleteAd);
+
+    // =========================================================================
+    // Miscellaneous URLs.
+    // =========================================================================
 
     // Collect an email.
     app.post("/email", landing.collectEmail);
+
+    // TEST
+    // app.get("/test", ads.test);
+
+    // TEST UPLOAD
+    // app.get("/upload", website.upload);
+
+    // =========================================================================
+    // END URL routing.
+    // =========================================================================
 
     app.listen(process.env.PORT || 8888);
 }
