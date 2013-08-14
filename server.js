@@ -110,16 +110,6 @@ function init() {
     // Render the landing page.
     app.get("/", website.index);
 
-    // Show all AdSpaces and allow AdSpace creation.
-    // app.get("/adspaces", website.allAdSpaces);
-
-    // Show all ads within a single AdSpace and allow ad creation as well as
-    // AdSpace deletion.
-    // app.get("/adspaces/:adspace_id", website.singleAdSpace);
-
-    // Show a single ad and allow modification and deletion.
-    // app.get("/adspaces/:adspace_id/ad/:ad_id", website.singleAd);
-
     // =========================================================================
     // The REST API.
     // =========================================================================
@@ -166,9 +156,6 @@ function init() {
 
     // TEST
     app.post("/test", ads.test);
-
-    // TEST UPLOAD
-    // app.get("/upload", website.upload);
 
     // =========================================================================
     // END URL routing.
