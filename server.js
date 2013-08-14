@@ -31,6 +31,7 @@
 var express    = require("express")
   , AWS        = require("aws-sdk")
   , ads        = require("./routes/ads")
+  , adspaces   = require("./routes/adspaces")
   , website    = require("./routes/website")
   , landing    = require("./routes/landing")
   , AWSManager = require("./utils/aws-manager")
@@ -115,19 +116,19 @@ function init() {
     // =========================================================================
 
     // CREATE a new AdSpace.
-    app.post("/api/adspace", ads.createAdSpace);
+    app.post("/api/adspace", adspaces.createAdSpace);
 
     // RETRIEVE all AdSpaces.
-    app.get("/api/adspace", ads.getAllAdSpaces);
+    app.get("/api/adspace", adspaces.getAllAdSpaces);
 
     // RETRIEVE a single AdSpace.
-    app.get("/api/adspace/:adspace_id", ads.getAdSpace);
+    app.get("/api/adspace/:adspace_id", adspaces.getAdSpace);
 
     // UPDATE an AdSpace.
-    app.put("/api/adspace/:adspace_id", ads.updateAdSpace);
+    app.put("/api/adspace/:adspace_id", adspaces.updateAdSpace);
 
     // DELETE an AdSpace and all ads it may reference.
-    app.del("/api/adspace/:adspace_id", ads.deleteAdSpace);
+    app.del("/api/adspace/:adspace_id", adspaces.deleteAdSpace);
 
     // CREATE an ad in the specified AdSpace.
     app.post("/api/adspace/:adspace_id/ad", ads.createAd);

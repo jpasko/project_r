@@ -4,139 +4,9 @@
  * Author: James Pasko (james@adcrafted.com).
  */
 
-// UUIDs are used as AdSpace identifiers.
-var uuid = require('node-uuid');
-
-// Get a single AdSpace.
-exports.getAdSpace = function(request, response) {
-    var db = response.app.get("db");
-    var params = exports._adSpaceParams(response.app.get("adspace_table_name"),
-				       request.params.adspace_id);
-    db.getItem(params, function(err, data) {
-	if (err) {
-	    response.send(err);
-	} else if (!exports._isEmpty(data)) {
-	    response.send(exports._parseItem(data.Item));
-	} else {
-	    response.send({"status": 404,
-			   "message": "AdSpace does not exist"});
-	}
-    });
-};
-
-// Get all AdSpaces.
-exports.getAllAdSpaces = function(request, response) {
-    var db = response.app.get("db");
-    var params = {
-	"TableName": response.app.get("adspace_table_name")
-    };
-    db.scan(params, function(err, data) {
-	if (err) {
-	    response.send(err);
-	} else {
-	    var result = {"status": 200,
-			  "Count": data.Count,
-			  "AdSpaces": []};
-	    for (var i = 0; i < data.Count; i++) {
-		result.AdSpaces[i] = exports._parseItem(data.Items[i]);
-	    }
-	    response.send(result);
-	}
-    });
-};
-
-// Get an Ad within an AdSpace specified by the id in the request params.
-// If no AdID is specified, a random ad is chosen.
-exports.getAd = function(request, response) {
-    var db = response.app.get("db");
-    var params = {
-	"TableName": response.app.get("ads_table_name"),
-	"KeyConditions": {
-	    "AdSpaceID": {
-		"AttributeValueList" : [{
-		    "S": request.params.adspace_id
-		}],
-		"ComparisonOperator" : "EQ"
-	    }
-	}
-    };
-    db.query(params, function(err, data) {
-	if (err) {
-	    response.send(err);
-	} else if (request.params.ad_id &&
-		   request.params.ad_id >= 0 &&
-		   request.params.ad_id < data.Count &&
-		   data.Count > 0) {
-	    response.send(
-		exports._parseItem(data.Items[request.params.ad_id]));
-	} else if (data.Count > 0 && !request.params.ad_id) {
-	    response.send(
-		exports._parseItem(
-		    data.Items[exports._getRandomInt(data.Count - 1)]));
-	} else {
-	    response.send({"status": 404,
-			   "message": "No such ad"});
-	}
-    });
-};
-
-// Get all ads in the specified AdSpace.
-exports.getAllAds = function(request, response) {
-    var db = response.app.get("db");
-    var params = {
-	"TableName": response.app.get("ads_table_name"),
-	"KeyConditions": {
-	    "AdSpaceID": {
-		"AttributeValueList" : [{
-		    "S": request.params.adspace_id
-		}],
-		"ComparisonOperator" : "EQ"
-	    }
-	}
-    };
-    db.query(params, function(err, data) {
-	if (err) {
-	    response.send(err);
-	} else {
-	    var result = {"Count": data.Count,
-			  "Ads": []};
-	    for (var i = 0; i < data.Count; i++) {
-		result.Ads[i] = exports._parseItem(data.Items[i]);
-	    }
-	    response.send(result);
-	}
-    });
-};
-
-// Create a new AdSpace, returning JSON indicating the new AdSpaceID.
-exports.createAdSpace = function(request, response) {
-    var db = response.app.get("db");
-    var adspace_id = uuid.v4();
-    var adspace_body = request.body;
-    var params = {
-	"TableName": response.app.get("adspace_table_name"),
-	"Item": {
-	    "AdSpaceID": {
-		"S": adspace_id
-	    }
-	}
-    };
-    for (var attr in adspace_body) {
-	params.Item[attr] = {"S": adspace_body[attr]};
-    }
-    db.putItem(params, function(err, data) {
-	if (err) {
-	    response.send(err);
-	} else {
-	    response.send( {"status": 201,
-			    "message": "Success",
-			    "AdSpaceID": adspace_id} );
-	}
-    });
-};
-
-// Create a new Ad within an existing AdSpace specified by the id.
-// Returns JSON indicating the new AdID.
+/**
+ * Create a new Ad within the specified AdSpace.
+ */
 exports.createAd = function(request, response) {
     var db = response.app.get("db");
     var ad = request.body;
@@ -217,38 +87,76 @@ exports.createAd = function(request, response) {
     });
 };
 
-// Updates the specified AdSpace. If it doesn't exist, a new AdSpace is created.
-exports.updateAdSpace = function(request, response) {
+/**
+ * Get a single Ad within the specified AdSpace. If no AdID is specified, a
+ * random ad is chosen.
+ */
+exports.getAd = function(request, response) {
     var db = response.app.get("db");
-    var adspace_body = request.body;
     var params = {
-	"TableName": response.app.get("adspace_table_name"),
-	"Key": {
+	"TableName": response.app.get("ads_table_name"),
+	"KeyConditions": {
 	    "AdSpaceID": {
-		"S": request.params.adspace_id
+		"AttributeValueList" : [{
+		    "S": request.params.adspace_id
+		}],
+		"ComparisonOperator" : "EQ"
 	    }
-	},
-	"AttributeUpdates": {}
+	}
     };
-    for (var attr in adspace_body) {
-	params.AttributeUpdates[attr] = {
-	    "Value": {
-		"S": adspace_body[attr]
-	    },
-	    "Action": "PUT"
-	};
-    }
-    db.updateItem(params, function(err, data) {
+    db.query(params, function(err, data) {
 	if (err) {
 	    response.send(err);
+	} else if (request.params.ad_id &&
+		   request.params.ad_id >= 0 &&
+		   request.params.ad_id < data.Count &&
+		   data.Count > 0) {
+	    response.send(
+		exports._parseItem(data.Items[request.params.ad_id]));
+	} else if (data.Count > 0 && !request.params.ad_id) {
+	    response.send(
+		exports._parseItem(
+		    data.Items[exports._getRandomInt(data.Count - 1)]));
 	} else {
-	    response.send( {"status": 200,
-			    "message": "Success"} );
+	    response.send({"status": 404,
+			   "message": "No such ad"});
 	}
     });
 };
 
-// Updates the specified ad. If it doesn't exist, a new ad is created.
+/**
+ * Get all ads in the specified AdSpace.
+ */
+exports.getAllAds = function(request, response) {
+    var db = response.app.get("db");
+    var params = {
+	"TableName": response.app.get("ads_table_name"),
+	"KeyConditions": {
+	    "AdSpaceID": {
+		"AttributeValueList" : [{
+		    "S": request.params.adspace_id
+		}],
+		"ComparisonOperator" : "EQ"
+	    }
+	}
+    };
+    db.query(params, function(err, data) {
+	if (err) {
+	    response.send(err);
+	} else {
+	    var result = {"Count": data.Count,
+			  "Ads": []};
+	    for (var i = 0; i < data.Count; i++) {
+		result.Ads[i] = exports._parseItem(data.Items[i]);
+	    }
+	    response.send(result);
+	}
+    });
+};
+
+/**
+ * Updates the specified ad. If it doesn't exist, a new ad is created.
+ */
 exports.updateAd = function(request, response) {
     var db = response.app.get("db");
     var ad = request.body;
@@ -282,63 +190,9 @@ exports.updateAd = function(request, response) {
     });
 };
 
-// Deletes an AdSpace and all Ads it references.
-exports.deleteAdSpace = function(request, response) {
-    var db = response.app.get("db");
-    var params = exports._adSpaceParams(response.app.get("adspace_table_name"),
-				       request.params.adspace_id);
-    db.deleteItem(params).send();
-    // Reassign params to facilitate a query of the Ads table.
-    params = {
-	"TableName": response.app.get("ads_table_name"),
-	"KeyConditions": {
-	    "AdSpaceID": {
-		"AttributeValueList" : [{
-		    "S": request.params.adspace_id
-		}],
-		"ComparisonOperator" : "EQ"
-	    }
-	}
-    };
-    db.query(params, function(err, data) {
-	if (err) {
-	    response.send(err);
-	} else if (data.Count > 0) {
-	    var batch = [];
-	    for (var i = 0; i < data.Count; i++) {
-		batch[i] = {
-                    "DeleteRequest": {
-			"Key": {
-			    "AdSpaceID": {
-				"S": request.params.adspace_id
-			    },
-			    "AdID": {
-				"N": data.Items[i].AdID.N
-			    }
-			}
-		    }
-		};
-	    }
-	    params = {
-		"RequestItems": {}
-	    };
-	    params.RequestItems[response.app.get("ads_table_name")] = batch;
-	    db.batchWriteItem(params, function(err, data) {
-		if (err) {
-		    response.send(err);
-		} else {
-		    response.send( {"status": 200,
-				    "message": "Success"} );
-		}
-	    });
-	} else {
-	    response.send( {"status": 200,
-			    "message": "Success"} );
-	}
-    });
-};
-
-// Deletes the specified Ad if it exists without deleting the AdSpace.
+/**
+ * Deletes the specified Ad if it exists without deleting the AdSpace.
+ */
 exports.deleteAd = function(request, response) {
     var db = response.app.get("db");
     var params = {
