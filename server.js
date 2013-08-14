@@ -104,7 +104,7 @@ app.configure(function() {
  */
 function init() {
     // =========================================================================
-    // URLs for human-readable content in the browser.
+    // URLs for human-readable content in the browser, rendered on the server.
     // =========================================================================
 
     // Render the landing page.
@@ -124,45 +124,48 @@ function init() {
     // The REST API.
     // =========================================================================
 
-    // Get all AdSpaces.
-    app.get("/api/adspace", ads.getAllAdSpaces);
-
-    // Get a specific AdSpace.
-    app.get("/api/adspace/:adspace_id", ads.getAdSpace);
-
-    // Get all ads within the specified AdSpace.
-    app.get("/api/adspace/:adspace_id/ad", ads.getAllAds);
-
-    // Get a random ad from the specified AdSpace.
-    app.get("/api/adspace/:adspace_id/ad/random", ads.getAd);
-
-    // Get a specific ad from the specified AdSpace.
-    app.get("/api/adspace/:adspace_id/ad/:ad_id", ads.getAd);
-
-    // Create a new AdSpace.
+    // CREATE a new AdSpace.
     app.post("/api/adspace", ads.createAdSpace);
 
-    // Create a new ad in the specified AdSpace.
-    app.post("/api/adspace/:adspace_id", ads.createAd);
+    // RETRIEVE all AdSpaces.
+    app.get("/api/adspace", ads.getAllAdSpaces);
 
-    // Update the specified ad, or create one if it doesn't exist.
-    app.put("/api/adspace/:adspace_id/ad/:ad_id", ads.replaceAd);
+    // RETRIEVE a single AdSpace.
+    app.get("/api/adspace/:adspace_id", ads.getAdSpace);
 
-    // Delete an entire AdSpace and all ads it may reference.
+    // UPDATE an AdSpace.
+    app.put("/api/adspace/:adspace_id", ads.updateAdSpace);
+
+    // DELETE an AdSpace and all ads it may reference.
     app.del("/api/adspace/:adspace_id", ads.deleteAdSpace);
 
-    // Delete a specific ad without deleting the AdSpace.
+    // CREATE an ad in the specified AdSpace.
+    app.post("/api/adspace/:adspace_id/ad", ads.createAd);
+
+    // RETRIEVE all ads within the specified AdSpace.
+    app.get("/api/adspace/:adspace_id/ad", ads.getAllAds);
+
+    // RETRIEVE a single ad from the specified AdSpace.
+    app.get("/api/adspace/:adspace_id/ad/:ad_id", ads.getAd);
+
+    // UPDATE an ad.
+    app.put("/api/adspace/:adspace_id/ad/:ad_id", ads.updateAd);
+
+    // DELETE an ad without deleting the AdSpace.
     app.del("/api/adspace/:adspace_id/ad/:ad_id", ads.deleteAd);
 
     // =========================================================================
     // Miscellaneous URLs.
     // =========================================================================
 
+    // RETRIEVE a random ad from the specified AdSpace.
+    app.get("/api/adspace/:adspace_id/random", ads.getAd);
+
     // Collect an email.
     app.post("/email", landing.collectEmail);
 
     // TEST
-    // app.get("/test", ads.test);
+    app.post("/test", ads.test);
 
     // TEST UPLOAD
     // app.get("/upload", website.upload);

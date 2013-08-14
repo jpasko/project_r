@@ -10,13 +10,16 @@ var uuid = require('node-uuid');
 // Get a single AdSpace.
 exports.getAdSpace = function(request, response) {
     var db = response.app.get("db");
-    var params = exports.adSpaceParams(response.app.get("adspace_table_name"),
+    var params = exports._adSpaceParams(response.app.get("adspace_table_name"),
 				       request.params.adspace_id);
     db.getItem(params, function(err, data) {
 	if (err) {
 	    response.send(err);
+	} else if (!exports._isEmpty(data)) {
+	    response.send(exports._parseItem(data.Item));
 	} else {
-	    response.send(exports.parseItem(data.Item));
+	    response.send({"status": 404,
+			   "message": "AdSpace does not exist"});
 	}
     });
 };
@@ -31,10 +34,11 @@ exports.getAllAdSpaces = function(request, response) {
 	if (err) {
 	    response.send(err);
 	} else {
-	    var result = {"Count": data.Count,
+	    var result = {"status": 200,
+			  "Count": data.Count,
 			  "AdSpaces": []};
 	    for (var i = 0; i < data.Count; i++) {
-		result.AdSpaces[i] = exports.parseItem(data.Items[i]);
+		result.AdSpaces[i] = exports._parseItem(data.Items[i]);
 	    }
 	    response.send(result);
 	}
@@ -64,14 +68,14 @@ exports.getAd = function(request, response) {
 		   request.params.ad_id < data.Count &&
 		   data.Count > 0) {
 	    response.send(
-		exports.parseAdQuery(data.Items[request.params.ad_id]));
+		exports._parseItem(data.Items[request.params.ad_id]));
 	} else if (data.Count > 0 && !request.params.ad_id) {
 	    response.send(
-		exports.parseAdQuery(
-		    data.Items[exports.getRandomInt(data.Count - 1)]));
+		exports._parseItem(
+		    data.Items[exports._getRandomInt(data.Count - 1)]));
 	} else {
-	    response.send( {"status": 404,
-			    "message": "No such ad"} );
+	    response.send({"status": 404,
+			   "message": "No such ad"});
 	}
     });
 };
@@ -97,7 +101,7 @@ exports.getAllAds = function(request, response) {
 	    var result = {"Count": data.Count,
 			  "Ads": []};
 	    for (var i = 0; i < data.Count; i++) {
-		result.Ads[i] = exports.parseAdQuery(data.Items[i]);
+		result.Ads[i] = exports._parseItem(data.Items[i]);
 	    }
 	    response.send(result);
 	}
@@ -108,22 +112,23 @@ exports.getAllAds = function(request, response) {
 exports.createAdSpace = function(request, response) {
     var db = response.app.get("db");
     var adspace_id = uuid.v4();
+    var adspace_body = request.body;
     var params = {
 	"TableName": response.app.get("adspace_table_name"),
 	"Item": {
 	    "AdSpaceID": {
 		"S": adspace_id
-	    },
-	    "publisher_id": {
-		"S": "placeholder"
 	    }
 	}
     };
+    for (var attr in adspace_body) {
+	params.Item[attr] = {"S": adspace_body[attr]};
+    }
     db.putItem(params, function(err, data) {
 	if (err) {
 	    response.send(err);
 	} else {
-	    response.send( {"status": 200,
+	    response.send( {"status": 201,
 			    "message": "Success",
 			    "AdSpaceID": adspace_id} );
 	}
@@ -137,13 +142,13 @@ exports.createAd = function(request, response) {
     var ad = request.body;
     var newAdID = 0;
     var adSpaceID = request.params.adspace_id;
-    var params = exports.adSpaceParams(response.app.get("adspace_table_name"),
+    var params = exports._adSpaceParams(response.app.get("adspace_table_name"),
 				       adSpaceID);
     // Check if the AdSpace exists.
     db.getItem(params, function(err, data) {
 	if (err) {
 	    response.send(err);
-	} else if (exports.isEmpty(data)) {
+	} else if (exports._isEmpty(data)) {
 	    response.send( {"status": 400,
 			    "message": "AdSpace does not exist"} );
 	} else {
@@ -212,43 +217,67 @@ exports.createAd = function(request, response) {
     });
 };
 
-// Replaces the specified ad.  If it doesn't exist, a new ad is created.
-exports.replaceAd = function(request, response) {
+// Updates the specified AdSpace. If it doesn't exist, a new AdSpace is created.
+exports.updateAdSpace = function(request, response) {
     var db = response.app.get("db");
-    var ad = request.body;
-    var adID = request.params.ad_id;
-    var adSpaceID = request.params.adspace_id;
+    var adspace_body = request.body;
     var params = {
-	"TableName": response.app.get("ads_table_name"),
-	"Item": {
+	"TableName": response.app.get("adspace_table_name"),
+	"Key": {
 	    "AdSpaceID": {
-		"S": adSpaceID
-	    },
-	    "AdID": {
-		"N": adID + ""
-	    },
-	    "title": {
-		"S": ad.title ? ad.title : "null"
-	    },
-	    "text": {
-		"S": ad.text ? ad.text : "null"
-	    },
-	    "image": {
-		"S": ad.image ? ad.image : "null"
-	    },
-	    "link": {
-		"S": ad.link ? ad.link : "null"
+		"S": request.params.adspace_id
 	    }
-	}
+	},
+	"AttributeUpdates": {}
     };
-    db.putItem(params, function(err, data) {
+    for (var attr in adspace_body) {
+	params.AttributeUpdates[attr] = {
+	    "Value": {
+		"S": adspace_body[attr]
+	    },
+	    "Action": "PUT"
+	};
+    }
+    db.updateItem(params, function(err, data) {
 	if (err) {
 	    response.send(err);
 	} else {
-	    response.send( {"status": 201,
-			    "message": "Success",
-			    "AdSpaceID": adSpaceID,
-			    "AdID": adID} );
+	    response.send( {"status": 200,
+			    "message": "Success"} );
+	}
+    });
+};
+
+// Updates the specified ad. If it doesn't exist, a new ad is created.
+exports.updateAd = function(request, response) {
+    var db = response.app.get("db");
+    var ad = request.body;
+    var params = {
+	"TableName": response.app.get("ads_table_name"),
+	"Key": {
+	    "AdSpaceID": {
+		"S": request.params.adspace_id
+	    },
+	    "AdID": {
+		"N": request.params.ad_id + ""
+	    }
+	},
+	"AttributeUpdates": {}
+    };
+    for (var attr in ad) {
+	params.AttributeUpdates[attr] = {
+	    "Value": {
+		"S": ad[attr]
+	    },
+	    "Action": "PUT"
+	};
+    }
+    db.updateItem(params, function(err, data) {
+	if (err) {
+	    response.send(err);
+	} else {
+	    response.send( {"status": 200,
+			    "message": "Success"} );
 	}
     });
 };
@@ -256,7 +285,7 @@ exports.replaceAd = function(request, response) {
 // Deletes an AdSpace and all Ads it references.
 exports.deleteAdSpace = function(request, response) {
     var db = response.app.get("db");
-    var params = exports.adSpaceParams(response.app.get("adspace_table_name"),
+    var params = exports._adSpaceParams(response.app.get("adspace_table_name"),
 				       request.params.adspace_id);
     db.deleteItem(params).send();
     // Reassign params to facilitate a query of the Ads table.
@@ -312,9 +341,17 @@ exports.deleteAdSpace = function(request, response) {
 // Deletes the specified Ad if it exists without deleting the AdSpace.
 exports.deleteAd = function(request, response) {
     var db = response.app.get("db");
-    var params = exports.adsParams(response.app.get("ads_table_name"),
-				     request.params.adspace_id,
-				     request.params.ad_id);
+    var params = {
+	"TableName": response.app.get("ads_table_name"),
+	"Key": {
+	    "AdSpaceID": {
+		"S": request.params.adspace_id
+	    },
+	    "AdID": {
+		"N": request.params.ad_id + ""
+	    }
+	}
+    };
     db.deleteItem(params, function(err, data) {
 	if (err) {
 	    response.send(err);
@@ -326,64 +363,42 @@ exports.deleteAd = function(request, response) {
 };
 
 /**
- * Parses an Ad.
+ * Parses an item returned from a query or getItem operation.
  */
-exports.parseAd = function(ad) {
-    return {"title": ad.Item.title ? ad.Item.title.S : null,
-	    "text": ad.Item.text ? ad.Item.text.S : null,
-	    "image": ad.Item.image ? ad.Item.image.S : null,
-	    "link": ad.Item.link ? ad.Item.link.S : null
-	   };
-}
-
-/**
- * Parses an Ad returned in a query.
- */
-exports.parseAdQuery = function(ad) {
-    return {"title": ad.title ? ad.title.S : null,
-	    "text": ad.text ? ad.text.S : null,
-	    "image": ad.image ? ad.image.S : null,
-	    "link": ad.link ? ad.link.S : null
-	   };
-}
-
-/**
- * Parses an item returned from a query.
- */
-exports.parseItem = function(item) {
+exports._parseItem = function(item) {
     var result = {};
     for (var attr in item) {
 	var attribute = item[attr];
 	var value = attribute["N"] ?
-	    attribute["N"] : attribute["S"] ? attribute["S"] : "null";
+	    attribute["N"] : attribute["S"] ? attribute["S"] : null;
 	result[attr] = value;
     }
     return result;
-}
+};
 
 /**
  * Generates a random integer in the range [0, max).
  */
-exports.getRandomInt = function(max) {
+exports._getRandomInt = function(max) {
     return Math.floor(Math.random() * (max + 1));
-}
+};
 
 /**
  * Checks if the object is empty (has no properties of its own).
  */
-exports.isEmpty = function(o){
+exports._isEmpty = function(o){
     for(var i in o){
         if(o.hasOwnProperty(i)){
             return false;
         }
     }
     return true;
-}
+};
 
 /**
- * Creates a request parameters object for adSpaceTable.
+ * Creates a request parameters object for AdSpace table.
  */
-exports.adSpaceParams = function(tableName, adSpaceID) {
+exports._adSpaceParams = function(tableName, adSpaceID) {
     return {
 	"TableName": tableName,
 	"Key": {
@@ -392,28 +407,14 @@ exports.adSpaceParams = function(tableName, adSpaceID) {
 	    }
 	}
     };
-}
-
-/**
- * Creates a request parameters object for adsTable.
- */
-exports.adsParams = function(tableName, adSpaceID, adID) {
-    return {
-	"TableName": tableName,
-	"Key": {
-	    "AdSpaceID": {
-		"S": adSpaceID
-	    },
-	    "AdID": {
-		"N": adID + ""
-	    }
-	}
-    };
-}
+};
 
 // TEST
 exports.test = function(request, response) {
-    var s3 = response.app.get("s3");
-    s3.test();
-    response.send("TEST");
+    var test = request.body;
+    var params = {};
+    for (var attr in test) {
+	params[attr] = {"S": test[attr]};
+    }
+    response.send(params);
 };
