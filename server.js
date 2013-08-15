@@ -81,6 +81,7 @@ app.configure(function() {
     app.use(express.favicon());
     app.use(express.methodOverride());
     app.use(app.router);
+    app.use(express.compress());
     app.use(express.static(path.join(__dirname, "public")));
     app.set("views", __dirname + "/views");
     app.set("view engine", "jade");
@@ -110,6 +111,9 @@ function init() {
 
     // Render the landing page.
     app.get("/", website.index);
+
+    // NOTE: The app also currently serves a UI demo at /demo. The demo is an
+    // Angular.js client of the following REST API.
 
     // =========================================================================
     // The REST API.
