@@ -21,11 +21,18 @@ exports.createAdSpace = function(request, response) {
 	"Item": {
 	    "AdSpaceID": {
 		"S": adspace_id
+	    },
+	    "date": {
+		"S": new Date().toISOString()
 	    }
 	}
     };
     for (var attr in adspace_body) {
-	params.Item[attr] = {"S": adspace_body[attr]};
+	if (adspace_body[attr] instanceof Array) {
+	    params.Item[attr] = {"SS": adspace_body[attr]};
+	} else {
+	    params.Item[attr] = {"S": adspace_body[attr]};
+	}
     }
     db.putItem(params, function(err, data) {
 	if (err) {
@@ -96,12 +103,23 @@ exports.updateAdSpace = function(request, response) {
 	"AttributeUpdates": {}
     };
     for (var attr in adspace_body) {
-	params.AttributeUpdates[attr] = {
-	    "Value": {
-		"S": adspace_body[attr]
-	    },
-	    "Action": "PUT"
-	};
+	if (attr == "AdSpaceID") {
+	    continue;
+	} else if (adspace_body[attr] instanceof Array) {
+	    params.AttributeUpdates[attr] = {
+		"Value": {
+		    "SS": adspace_body[attr]
+		},
+		"Action": "PUT"
+	    };
+	} else {
+	    params.AttributeUpdates[attr] = {
+		"Value": {
+		    "S": adspace_body[attr]
+		},
+		"Action": "PUT"
+	    };
+	}
     }
     db.updateItem(params, function(err, data) {
 	if (err) {
@@ -179,7 +197,9 @@ exports._parseItem = function(item) {
     for (var attr in item) {
 	var attribute = item[attr];
 	var value = attribute["N"] ?
-	    attribute["N"] : attribute["S"] ? attribute["S"] : null;
+	    attribute["N"] : attribute["S"] ?
+	    attribute["S"] : attribute["SS"] ?
+	    attribute["SS"] : null;
 	result[attr] = value;
     }
     return result;

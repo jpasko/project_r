@@ -173,6 +173,9 @@ exports.updateAd = function(request, response) {
 	"AttributeUpdates": {}
     };
     for (var attr in ad) {
+	if (attr == "AdID" || attr == "AdSpaceID") {
+	    continue;
+	}
 	params.AttributeUpdates[attr] = {
 	    "Value": {
 		"S": ad[attr]
