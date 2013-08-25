@@ -67,7 +67,10 @@ exports.createAd = function(request, response) {
 			    },
 			    "link": {
 				"S": ad.link ? ad.link : "null"
-			    }
+			    },
+			    "date": {
+				"S": new Date().toISOString()
+			    },
 			}
 		    };
 		    // Finally, put the new ad.

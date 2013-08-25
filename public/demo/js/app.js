@@ -2,7 +2,7 @@
  * App Module.
  */
 
-angular.module("adcrafted", ["adSpaceServices", "adServices", "customDirectives", "ui.bootstrap"]).
+angular.module("adcrafted", ["adSpaceServices", "adServices", "customDirectives", "fileServices", "ui.bootstrap"]).
     config(["$routeProvider",  function($routeProvider) {
 	$routeProvider.
 	    when("/adspaces", {templateUrl: "partials/adspace-list.html",   controller: AdSpaceListCtrl}).

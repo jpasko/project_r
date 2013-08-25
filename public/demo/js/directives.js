@@ -1,31 +1,67 @@
 var customDirectives = angular.module("customDirectives", []);
 
-customDirectives.directive("dropzone", function(){
+customDirectives.directive("fileInput", function($parse) {
     return {
-        restrict : "A",
-        link: function (scope, elem) {
-            elem.bind('drop', function(evt) {
-                evt.stopPropagation();
-                evt.preventDefault();
+        restrict: "A",
+        template: "<input type='file' />",
+        replace: true,
+        link: function (scope, element, attrs) {
+            var modelGet = $parse(attrs.fileInput);
+            var modelSet = modelGet.assign;
+            var onChange = $parse(attrs.onChange);
 
-                var files = evt.dataTransfer.files;
-                for (var i = 0, f; f = files[i]; i++) {
-                    var reader = new FileReader();
-                    reader.readAsArrayBuffer(f);
-
-                    reader.onload = (function(theFile) {
-                        return function(e) {
-                            var newFile = { name : theFile.name,
-					    type : theFile.type,
-					    size : theFile.size,
-					    lastModifiedDate : theFile.lastModifiedDate
-					  }
-
-                            scope.addfile(newFile);
-                        };
-                    })(f);
-                }
-            });
+            var updateModel = function () {
+                scope.$apply(function () {
+                    modelSet(scope, element[0].files[0]);
+                    onChange(scope);
+                });                    
+            };
+            element.bind("change", updateModel);
         }
-    }
+    };
+});
+
+customDirectives.directive("imageDrop", function ($parse) {
+    return {
+        restrict: "A",
+        link: function (scope, element, attrs) {
+            var expression = attrs.imageDrop;
+            var accessor = $parse(expression);
+            var onChange = $parse(attrs.onChange);
+
+            var onDragOver = function (e) {
+                e.preventDefault();
+                element.addClass("drag-over");
+            };
+
+            var onDragEnd = function (e) {
+                e.preventDefault();
+                element.removeClass("drag-over");
+            };
+
+            var updateModel = function (file) {
+                scope.$apply(function () {
+                    accessor.assign(scope, file);
+                    onChange(scope);
+                });                    
+            };
+
+            element.bind("dragover", onDragOver)
+                .bind("dragleave", onDragEnd)
+                .bind("drop", function (e) {
+                    onDragEnd(e);
+                    updateModel(e.dataTransfer.files[0]);
+                });
+        }
+    };
+});
+
+customDirectives.directive("fallbackSrc", function() {
+    return {
+	link: function postLink(scope, elem, attrs) {
+	    elem.bind("error", function() {
+		angular.element(this).attr("src", attrs.fallbackSrc);
+	    });
+	}
+    };
 });

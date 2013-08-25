@@ -24,10 +24,20 @@ exports.createAdSpace = function(request, response) {
 	    },
 	    "date": {
 		"S": new Date().toISOString()
+	    },
+	    "image": {
+		"S": "null"
 	    }
 	}
     };
     for (var attr in adspace_body) {
+	// The image attribute is a Base64 encoded file and must be processed
+	// separately.
+	/*
+	if (attr == "image") {
+	    continue;
+	}
+	*/
 	if (adspace_body[attr] instanceof Array) {
 	    params.Item[attr] = {"SS": adspace_body[attr]};
 	} else {

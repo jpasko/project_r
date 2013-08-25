@@ -30,7 +30,7 @@
 <!-- ADSPACE list -->
 <div ng-repeat="Ad in AdCollection.Ads | orderBy:orderProp:orderReverse | filter:query" class="ad-thumbnail row">
   <div class="col-md-3">
-    <img src={{Ad.image}} class="img-rounded ad-img">
+    <img ng-src="{{Ad.image}}" fallback-src="http://placehold.it/240x240" class="img-rounded ad-img">
   </div>
   <div class="col-md-5">
     <div class="adspace-information">

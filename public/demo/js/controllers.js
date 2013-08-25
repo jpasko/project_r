@@ -18,9 +18,23 @@ function AdSpaceDetailCtrl($scope, $routeParams, AdCollection) {
     $scope.orderProp = "title";
 }
 
-function CreateAdSpaceCtrl($scope, AdSpaceCollection) {
-    $scope.adSpace = {};
+function CreateAdSpaceCtrl($scope, AdSpaceCollection, CustomFileReader) {
+    // Pre-populate the adSpace object with a null image to allow the fallback
+    // src attribute to work properly.
+    $scope.adSpace = {image: "null"};
 
+    // Read the file from the drop event on the tag with imageDrop directive.
+    // The tag with the directive must also specify an on-change attribute,
+    // which should reference this function.
+    $scope.readFile = function() {         
+        CustomFileReader.readAsDataUrl($scope.file, $scope)
+            .then(function(result) {
+                $scope.adSpace.image = result;
+            });
+    };
+
+    // Call the create service which wraps a call to the REST API, thus creating
+    // the new AdSpace.
     $scope.create = function(newAdSpaceForm) {
 	if (newAdSpaceForm.$valid) {
 	    AdSpaceCollection.create($scope.adSpace, function() {
@@ -30,10 +44,15 @@ function CreateAdSpaceCtrl($scope, AdSpaceCollection) {
     }
 }
 
-function EditAdSpaceCtrl($scope, $routeParams, SingleAdSpace) {
+function EditAdSpaceCtrl($scope, $routeParams, SingleAdSpace, CustomFileReader) {
     $scope.adSpace = SingleAdSpace.get({adSpaceID: $routeParams.AdSpaceID});
 
-    $scope.adSpace.image = $scope.adSpace.image || "http://placehold.it/240x240";
+    $scope.readFile = function() {         
+        CustomFileReader.readAsDataUrl($scope.file, $scope)
+            .then(function(result) {
+                $scope.adSpace.image = result;
+            });
+    };
 
     $scope.update = function(AdSpaceForm) {
 	if (AdSpaceForm.$valid) {
@@ -52,10 +71,17 @@ function EditAdSpaceCtrl($scope, $routeParams, SingleAdSpace) {
 }
 
 
-function CreateAdCtrl($scope, $routeParams, AdCollection) {
+function CreateAdCtrl($scope, $routeParams, AdCollection, CustomFileReader) {
     $scope.adSpaceID = $routeParams.AdSpaceID;
 
-    $scope.ad = {};
+    $scope.ad = {image: "null"};
+
+    $scope.readFile = function() {         
+        CustomFileReader.readAsDataUrl($scope.file, $scope)
+            .then(function(result) {
+                $scope.ad.image = result;
+            });
+    };
 
     $scope.create = function(newAdForm) {
 	if (newAdForm.$valid) {
@@ -68,11 +94,18 @@ function CreateAdCtrl($scope, $routeParams, AdCollection) {
     }
 }
 
-function EditAdCtrl($scope, $routeParams, SingleAd) {
+function EditAdCtrl($scope, $routeParams, SingleAd, CustomFileReader) {
     $scope.adSpaceID = $routeParams.AdSpaceID;
 
     $scope.ad = SingleAd.get({adID: $routeParams.AdID,
 			      adSpaceID: $routeParams.AdSpaceID});
+
+    $scope.readFile = function() {         
+        CustomFileReader.readAsDataUrl($scope.file, $scope)
+            .then(function(result) {
+                $scope.ad.image = result;
+            });
+    };
 
     $scope.update = function(AdForm) {
 	if (AdForm.$valid) {

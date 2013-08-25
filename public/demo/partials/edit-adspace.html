@@ -33,9 +33,8 @@
 	</div>
       </div>
     </div>
-    <div class="col-md-offset-1 col-md-3" dropzone>
-      <!--<input class="hidden" type="file" id="image" accept="image/*">-->
-      <img src={{adSpace.image}} class="img-rounded">
+    <div class="col-md-offset-1 col-md-3">
+      <img ng-src="{{adSpace.image}}" fallback-src="http://placehold.it/240x240" class="adspace-img img-rounded draggable" on-change="readFile()" image-drop="file">
       <p class="text-muted">Drag and drop an image file here.</p>
     </div>
   </div>
