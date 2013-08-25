@@ -13,20 +13,20 @@ body {
 
 #tagline {
     color: black;
-    font-size: 1.5em;
+    font-size: 1.4em;
     text-align: center;
     margin-top: 325px;
 }
 
 #landing-email {
-    width: 340px;
+    width: 310px;
     margin: 70px auto 0 auto;
 }
 
 #email-input {
     padding: 0 5px;
     margin: 0;
-    width: 245px;
+    width: 215px;
     height: 40px;
     display: inline;
     font-size: 1.2em;
@@ -76,7 +76,7 @@ body {
 }
 
 #thank-you {
-    font-size: 1.5em;
+    font-size: 1.4em;
 }
 #image-input {
     display: none;
