@@ -13,6 +13,9 @@ $( document ).ready(function() {
 		    $("#submit-message").fadeIn();
 		} else {
 		    $("#submit-message").fadeOut();
+		    $("#tagline").fadeOut(400, function() {
+			$(this).text("brandon@adcrafted.com").fadeIn(400);
+		    });
 		    $("#email-input-wrapper").fadeOut(400, function() {
 			$("#thank-you").fadeIn(10, function() {
 			    $("#thank-you").fadeOut(3000);

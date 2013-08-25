@@ -31,6 +31,6 @@ exports.collectEmail = function(request, response) {
 	});
     } catch (e) {
 	response.send( {"status": 400,
-			"message": "your email appears to be invalid"} );
+			"message": "That email doesn't look right!"} );
     }
 };

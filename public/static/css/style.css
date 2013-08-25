@@ -11,15 +11,22 @@ body {
     background-color: rgb(63, 169, 245);
 }
 
+#tagline {
+    color: black;
+    font-size: 1.5em;
+    text-align: center;
+    margin-top: 325px;
+}
+
 #landing-email {
-    width: 290px;
-    margin: 350px auto 0 auto;
+    width: 340px;
+    margin: 70px auto 0 auto;
 }
 
 #email-input {
     padding: 0 5px;
     margin: 0;
-    width: 225px;
+    width: 245px;
     height: 40px;
     display: inline;
     font-size: 1.2em;
@@ -37,7 +44,7 @@ body {
 #email-send {
     padding: 0;
     margin: 0 0 0 5px;
-    width: 60px;
+    width: 90px;
     height: 40px;
     display: inline;
     border: none;
