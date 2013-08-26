@@ -19,9 +19,11 @@ function AdSpaceDetailCtrl($scope, $routeParams, AdCollection) {
 }
 
 function CreateAdSpaceCtrl($scope, AdSpaceCollection, CustomFileReader) {
-    // Pre-populate the adSpace object with a null image to allow the fallback
-    // src attribute to work properly.
-    $scope.adSpace = {image: "null"};
+    $scope.adSpace = {};
+
+    // Pre-populate the imageSrc with null to allow the fallback src attribute
+    // to work properly.
+    $scope.imageSrc = "null";
 
     // Read the file from the drop event on the tag with imageDrop directive.
     // The tag with the directive must also specify an on-change attribute,
@@ -30,6 +32,8 @@ function CreateAdSpaceCtrl($scope, AdSpaceCollection, CustomFileReader) {
         CustomFileReader.readAsDataUrl($scope.file, $scope)
             .then(function(result) {
                 $scope.adSpace.image = result;
+		// Update imageSrc so that the image displays immediately.
+		$scope.imageSrc = result;
             });
     };
 
@@ -45,12 +49,16 @@ function CreateAdSpaceCtrl($scope, AdSpaceCollection, CustomFileReader) {
 }
 
 function EditAdSpaceCtrl($scope, $routeParams, SingleAdSpace, CustomFileReader) {
-    $scope.adSpace = SingleAdSpace.get({adSpaceID: $routeParams.AdSpaceID});
+    $scope.adSpace =
+	SingleAdSpace.get({adSpaceID: $routeParams.AdSpaceID}, function() {
+	    $scope.imageSrc = $scope.adSpace.image ? $scope.adSpace.image : "null";
+	});
 
     $scope.readFile = function() {         
         CustomFileReader.readAsDataUrl($scope.file, $scope)
             .then(function(result) {
                 $scope.adSpace.image = result;
+		$scope.imageSrc = result;
             });
     };
 

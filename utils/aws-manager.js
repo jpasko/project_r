@@ -10,69 +10,68 @@ function S3(s3, bucket) {
 
     // The S3 bucket name.
     this.bucket = bucket;
-
-    // Test public attribute;
-    this.foo = [];
 }
 
 /**
- * TEST -- list all buckets.
+ * Upload an object to S3.
+ * @param {Buffer} body The Buffer containing the file data.
+ * @param {number} key.
  */
-S3.prototype.test = function() {
-    this.s3.listBuckets((function(err, data) {
-	console.log("Before: " + this.foo);
-	for (var index in data.Buckets) {
-	    var bucket = data.Buckets[index];
-	    console.log("Bucket: ", bucket.Name, ' : ', bucket.CreationDate);
-	    this.foo[index] = bucket.Name;
-	}
-	console.log("After: " + this.foo);
-    }).bind(this));
-};
-
-/**
- * Create the specified S3 folder.
- * @return {boolean} success.
- */
-S3.prototype.createFolder = function(name) {
-
-};
-
-/**
- * Delete the specified folder from S3.
- * @return {boolean} success.
- */
-S3.prototype.delFolder = function(name) {
-
-};
-
-/**
- * Upload a file to S3.  The file is named <adID>.ext and placed into the
- * <folderName> folder within the S3 bucket.
- * @return {boolean} success.
- */
-S3.prototype.upload = function(file, folderName, adID) {
+S3.prototype.upload = function(body, key) {
     var params = {
 	"ACL": "public-read",
-	"Bucket": this.bucket
+	"Body": body,
+	"Bucket": this.bucket,
+	"Key": key
     };
+    this.s3.putObject(params, function(err, data) {
+	if (err) {
+	    console.log("Error uploading S3 object: " + err);
+	}
+    });
 };
 
 /**
- * Delete the selected file from S3.
- * @return {boolean} success.
+ * Delete the selected object from S3.
+ * @param {number} adSpaceID.
+ * @param {number} adID.
+ * @param {string} ext.
  */
-S3.prototype.del = function(folderName, adID) {
-
+S3.prototype.del = function(adSpaceID, adID, ext) {
+    var key = adSpaceID + "_" + adID + "." + ext;
+    var params = {
+	"Bucket": this.bucket,
+	"Key": key
+    };
+    this.s3.deleteObject(params, function(err, data) {
+	if (err) {
+	    console.log("Error deleting S3 object: " + err);
+	}
+    });
 };
 
 /**
- * Returns the public URL.
+ * Returns the public URL for an AdSpace image.
+ * @param {number} adSpaceID.
+ * @param {string} ext.
  * @return {string} The url.
  */
-S3.prototype.getURL = function(adSpaceID, adID) {
-    return "https://" + this.bucket + ".s3.amazonaws.com/" + adSpaceID + "/" + adID;
+S3.prototype.getAdSpaceImageURL = function(adSpaceID, ext) {
+    return "https://" + this.bucket + ".s3.amazonaws.com/" +
+	adSpaceID + "." + ext;
 };
 
-// Finally, assign the S3 object to exports, to be used as a module.
+/**
+ * Returns the public URL for an Ad image.
+ * @param {number} adSpaceID.
+ * @param {number} adID.
+ * @param {string} ext.
+ * @return {string} The url.
+ */
+S3.prototype.getAdImageURL = function(adSpaceID, adID, ext) {
+    return "https://" + this.bucket + ".s3.amazonaws.com/" +
+	adSpaceID + "_" + adID + "." + ext;
+};
+
+// Assign the S3 object to exports, to be used as a module.
 exports.S3 = S3;

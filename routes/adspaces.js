@@ -7,13 +7,14 @@
 /**
  * UUIDs are used as AdSpace identifiers.
  */
-var uuid = require('node-uuid');
+var uuid = require("node-uuid");
 
 /**
  * Create a new AdSpace, returning JSON indicating the new AdSpaceID.
  */
 exports.createAdSpace = function(request, response) {
     var db = response.app.get("db");
+    var s3 = response.app.get("s3");
     var adspace_id = uuid.v4();
     var adspace_body = request.body;
     var params = {
@@ -33,12 +34,17 @@ exports.createAdSpace = function(request, response) {
     for (var attr in adspace_body) {
 	// The image attribute is a Base64 encoded file and must be processed
 	// separately.
-	/*
-	if (attr == "image") {
-	    continue;
-	}
-	*/
-	if (adspace_body[attr] instanceof Array) {
+	if (attr == "image" && !!adspace_body["image"]) {
+	    var file = exports._parseFile(adspace_body[attr]);
+	    if (file.isBase64) {
+		var ext = file.ext;
+		var key = adspace_id + "." + ext;
+		s3.upload(file.body, key);
+		params.Item[attr] = {
+		    "S": s3.getAdSpaceImageURL(adspace_id, ext)
+		};
+	    }
+	} else if (adspace_body[attr] instanceof Array) {
 	    params.Item[attr] = {"SS": adspace_body[attr]};
 	} else {
 	    params.Item[attr] = {"S": adspace_body[attr]};
@@ -102,12 +108,14 @@ exports.getAllAdSpaces = function(request, response) {
  */
 exports.updateAdSpace = function(request, response) {
     var db = response.app.get("db");
+    var s3 = response.app.get("s3");
     var adspace_body = request.body;
+    var adspace_id = request.params.adspace_id;
     var params = {
 	"TableName": response.app.get("adspace_table_name"),
 	"Key": {
 	    "AdSpaceID": {
-		"S": request.params.adspace_id
+		"S": adspace_id
 	    }
 	},
 	"AttributeUpdates": {}
@@ -115,6 +123,19 @@ exports.updateAdSpace = function(request, response) {
     for (var attr in adspace_body) {
 	if (attr == "AdSpaceID") {
 	    continue;
+	} else if (attr == "image") {
+	    var file = exports._parseFile(adspace_body[attr]);
+	    if (file.isBase64) {
+		var ext = file.ext;
+		var key = adspace_id + "." + ext;
+		s3.upload(file.body, key);
+		params.AttributeUpdates[attr] = {
+		    "Value": {
+			"S": s3.getAdSpaceImageURL(adspace_id, ext)
+		    },
+		    "Action": "PUT"
+		};
+	    }
 	} else if (adspace_body[attr] instanceof Array) {
 	    params.AttributeUpdates[attr] = {
 		"Value": {
@@ -239,4 +260,26 @@ exports._adSpaceParams = function(tableName, adSpaceID) {
 	    }
 	}
     };
+};
+
+/**
+ * Extracts the metadata from the Base64 encoded data and returns an object
+ * containing the metadata and data.
+ * @param {string} file The URL/Base64 encoded file.
+ */
+exports._parseFile = function(file){
+    var result = {};
+    var matches = file.match(/^data:.+\/(.+);base64,(.*)$/);
+    if (!!matches && matches.length == 3) {
+	result = {
+	    "isBase64": true,
+	    "ext": matches[1],
+	    "body": new Buffer(matches[2], 'base64')
+	};
+    } else {
+	result = {
+	    "isBase64": false
+	};
+    }
+    return result;
 };

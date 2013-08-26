@@ -36,7 +36,6 @@ var express    = require("express")
   , landing    = require("./routes/landing")
   , AWSManager = require("./utils/aws-manager")
   , http       = require("http")
-  , fs         = require("fs")
   , path       = require("path")
   , async      = require("async");
 
@@ -88,7 +87,6 @@ app.configure(function() {
     app.set("email_table", "AdCrafted-emails");
     app.set("db", new AWS.DynamoDB());
     app.set("s3", new AWSManager.S3(new AWS.S3(), app.get("s3_bucket")));
-    app.set("fs", fs);
     // Error handler.
     app.use(function(err, request, response, next){
 	console.error(err.stack);
