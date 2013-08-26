@@ -9,6 +9,7 @@
  */
 exports.createAd = function(request, response) {
     var db = response.app.get("db");
+    var s3 = response.app.get("s3");
     var ad = request.body;
     var newAdID = 0;
     var adSpaceID = request.params.adspace_id;
@@ -56,23 +57,34 @@ exports.createAd = function(request, response) {
 			    "AdID": {
 				"N": newAdID + ""
 			    },
-			    "title": {
-				"S": ad.title ? ad.title : "null"
-			    },
-			    "text": {
-				"S": ad.text ? ad.text : "null"
-			    },
 			    "image": {
-				"S": ad.image ? ad.image : "null"
-			    },
-			    "link": {
-				"S": ad.link ? ad.link : "null"
+				"S": "null"
 			    },
 			    "date": {
 				"S": new Date().toISOString()
-			    },
+			    }
 			}
 		    };
+		    for (var attr in ad) {
+			// The image attribute is a Base64 encoded file and must
+			//  be processed separately.
+			if (attr == "image" && !!ad["image"]) {
+			    var file = exports._parseFile(ad[attr]);
+			    if (file.isBase64) {
+				var ext = file.ext;
+				var key = adSpaceID + "_" + newAdID+ "." + ext;
+				s3.upload(file.body, key);
+				params.Item["image"] = {
+				    "S": s3.getAdImageURL(adSpaceID,
+							  newAdID, ext)
+				};
+			    }
+			} else if (ad[attr] instanceof Array) {
+			    params.Item[attr] = {"SS": ad[attr]};
+			} else {
+			    params.Item[attr] = {"S": ad[attr]};
+			}
+		    }
 		    // Finally, put the new ad.
 		    db.putItem(params, function(err, data) {
 			if (err) {
@@ -162,15 +174,18 @@ exports.getAllAds = function(request, response) {
  */
 exports.updateAd = function(request, response) {
     var db = response.app.get("db");
+    var s3 = response.app.get("s3");
     var ad = request.body;
+    var adSpaceID = request.params.adspace_id;
+    var adID = request.params.ad_id;
     var params = {
 	"TableName": response.app.get("ads_table_name"),
 	"Key": {
 	    "AdSpaceID": {
-		"S": request.params.adspace_id
+		"S": adSpaceID
 	    },
 	    "AdID": {
-		"N": request.params.ad_id + ""
+		"N": adID + ""
 	    }
 	},
 	"AttributeUpdates": {}
@@ -178,13 +193,27 @@ exports.updateAd = function(request, response) {
     for (var attr in ad) {
 	if (attr == "AdID" || attr == "AdSpaceID") {
 	    continue;
+	} else if (attr == "image") {
+	    var file = exports._parseFile(ad[attr]);
+	    if (file.isBase64) {
+		var ext = file.ext;
+		var key = adSpaceID + "_" + adID + "." + ext;
+		s3.upload(file.body, key);
+		params.AttributeUpdates[attr] = {
+		    "Value": {
+			"S": s3.getAdImageURL(adSpaceID, adID, ext)
+		    },
+		    "Action": "PUT"
+		};
+	    }
+	} else {
+	    params.AttributeUpdates[attr] = {
+		"Value": {
+		    "S": ad[attr]
+		},
+		"Action": "PUT"
+	    };
 	}
-	params.AttributeUpdates[attr] = {
-	    "Value": {
-		"S": ad[attr]
-	    },
-	    "Action": "PUT"
-	};
     }
     db.updateItem(params, function(err, data) {
 	if (err) {
@@ -277,4 +306,26 @@ exports.test = function(request, response) {
 	params[attr] = {"S": test[attr]};
     }
     response.send(params);
+};
+
+/**
+ * Extracts the metadata from the Base64 encoded data and returns an object
+ * containing the metadata and data.
+ * @param {string} file The URL/Base64 encoded file.
+ */
+exports._parseFile = function(file){
+    var result = {};
+    var matches = file.match(/^data:.+\/(.+);base64,(.*)$/);
+    if (!!matches && matches.length == 3) {
+	result = {
+	    "isBase64": true,
+	    "ext": matches[1],
+	    "body": new Buffer(matches[2], 'base64')
+	};
+    } else {
+	result = {
+	    "isBase64": false
+	};
+    }
+    return result;
 };

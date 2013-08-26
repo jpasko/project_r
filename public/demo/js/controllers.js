@@ -51,7 +51,8 @@ function CreateAdSpaceCtrl($scope, AdSpaceCollection, CustomFileReader) {
 function EditAdSpaceCtrl($scope, $routeParams, SingleAdSpace, CustomFileReader) {
     $scope.adSpace =
 	SingleAdSpace.get({adSpaceID: $routeParams.AdSpaceID}, function() {
-	    $scope.imageSrc = $scope.adSpace.image ? $scope.adSpace.image : "null";
+	    $scope.imageSrc = $scope.adSpace.image ?
+		$scope.adSpace.image : "null";
 	});
 
     $scope.readFile = function() {         
@@ -78,16 +79,18 @@ function EditAdSpaceCtrl($scope, $routeParams, SingleAdSpace, CustomFileReader) 
     }
 }
 
-
 function CreateAdCtrl($scope, $routeParams, AdCollection, CustomFileReader) {
     $scope.adSpaceID = $routeParams.AdSpaceID;
 
-    $scope.ad = {image: "null"};
+    $scope.ad = {};
+
+    $scope.imageSrc = "null";
 
     $scope.readFile = function() {         
         CustomFileReader.readAsDataUrl($scope.file, $scope)
             .then(function(result) {
                 $scope.ad.image = result;
+		$scope.imageSrc = result;
             });
     };
 
@@ -106,12 +109,16 @@ function EditAdCtrl($scope, $routeParams, SingleAd, CustomFileReader) {
     $scope.adSpaceID = $routeParams.AdSpaceID;
 
     $scope.ad = SingleAd.get({adID: $routeParams.AdID,
-			      adSpaceID: $routeParams.AdSpaceID});
+			      adSpaceID: $routeParams.AdSpaceID}, function() {
+				  $scope.imageSrc = $scope.ad.image ?
+				      $scope.ad.image : "null";
+			      });
 
     $scope.readFile = function() {         
         CustomFileReader.readAsDataUrl($scope.file, $scope)
             .then(function(result) {
                 $scope.ad.image = result;
+		$scope.imageSrc = result;
             });
     };
 
