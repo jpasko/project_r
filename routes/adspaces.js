@@ -39,7 +39,7 @@ exports.createAdSpace = function(request, response) {
 	    if (file.isBase64) {
 		var ext = file.ext;
 		var key = adspace_id + "." + ext;
-		s3.upload(file.body, key);
+		s3.upload(file.body, key, "image/" + ext);
 		params.Item[attr] = {
 		    "S": s3.getAdSpaceImageURL(adspace_id, ext)
 		};
@@ -128,7 +128,7 @@ exports.updateAdSpace = function(request, response) {
 	    if (file.isBase64) {
 		var ext = file.ext;
 		var key = adspace_id + "." + ext;
-		s3.upload(file.body, key);
+		s3.upload(file.body, key, "image/" + ext);
 		params.AttributeUpdates[attr] = {
 		    "Value": {
 			"S": s3.getAdSpaceImageURL(adspace_id, ext)
@@ -167,9 +167,14 @@ exports.updateAdSpace = function(request, response) {
  */
 exports.deleteAdSpace = function(request, response) {
     var db = response.app.get("db");
+    var s3 = response.app.get("s3");
+    var adSpaceID = request.params.adspace_id;
     var params = exports._adSpaceParams(response.app.get("adspace_table_name"),
 				       request.params.adspace_id);
+    // Delete the AdSpace from the database.
     db.deleteItem(params).send();
+    // Delete the image it may reference.
+    s3.deleteAdSpaceImage(adSpaceID);
     // Reassign params to facilitate a query of the Ads table.
     params = {
 	"TableName": response.app.get("ads_table_name"),
@@ -188,11 +193,13 @@ exports.deleteAdSpace = function(request, response) {
 	} else if (data.Count > 0) {
 	    var batch = [];
 	    for (var i = 0; i < data.Count; i++) {
+		// Delete any images the ad may reference.
+		s3.deleteAdImage(adSpaceID, data.Items[i].AdID.N);
 		batch[i] = {
                     "DeleteRequest": {
 			"Key": {
 			    "AdSpaceID": {
-				"S": request.params.adspace_id
+				"S": adSpaceID
 			    },
 			    "AdID": {
 				"N": data.Items[i].AdID.N

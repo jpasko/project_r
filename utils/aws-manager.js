@@ -1,4 +1,10 @@
 /**
+ * A collection of AWS clients to simplify interactions with AWS services.
+ *
+ * Author: James Pasko (james@adcrafted.com).
+ */
+
+/**
  * A manager to simplify interactions with Amazon's S3 through their Node.js
  * SDK. 
  *
@@ -10,19 +16,24 @@ function S3(s3, bucket) {
 
     // The S3 bucket name.
     this.bucket = bucket;
+
+    // All supported image types.
+    this.imageTypes = ["jpeg", "png", "gif", "tiff"];
 }
 
 /**
  * Upload an object to S3.
  * @param {Buffer} body The Buffer containing the file data.
  * @param {number} key.
+ * @param {number} contentType.
  */
-S3.prototype.upload = function(body, key) {
+S3.prototype.upload = function(body, key, contentType) {
     var params = {
 	"ACL": "public-read",
 	"Body": body,
 	"Bucket": this.bucket,
-	"Key": key
+	"Key": key,
+	"ContentType": contentType
     };
     this.s3.putObject(params, function(err, data) {
 	if (err) {
@@ -32,20 +43,53 @@ S3.prototype.upload = function(body, key) {
 };
 
 /**
- * Delete the selected object from S3.
+ * Deletes all possible images for the AdSpace.
  * @param {number} adSpaceID.
  * @param {number} adID.
  * @param {string} ext.
  */
-S3.prototype.del = function(adSpaceID, adID, ext) {
-    var key = adSpaceID + "_" + adID + "." + ext;
+S3.prototype.deleteAdSpaceImage = function(adSpaceID) {
+    var allPossibleImages = [];
+    for (var i = 0; i < this.imageTypes.length; i++) {
+	allPossibleImages[i] = {
+	    "Key": adSpaceID + "." + this.imageTypes[i]
+	}
+    }
     var params = {
 	"Bucket": this.bucket,
-	"Key": key
+	"Delete": {
+	    "Objects": allPossibleImages
+	}
     };
-    this.s3.deleteObject(params, function(err, data) {
+    this.s3.deleteObjects(params, function(err, data) {
 	if (err) {
-	    console.log("Error deleting S3 object: " + err);
+	    console.log("Error deleting S3 AdSpace image: " + err);
+	}
+    });
+};
+
+/**
+ * Deletes all possible images for the Ad.
+ * @param {number} adSpaceID.
+ * @param {number} adID.
+ * @param {string} ext.
+ */
+S3.prototype.deleteAdImage = function(adSpaceID, adID) {
+    var allPossibleImages = [];
+    for (var i = 0; i < this.imageTypes.length; i++) {
+	allPossibleImages[i] = {
+	    "Key": adSpaceID + "_" + adID + "." + this.imageTypes[i]
+	}
+    }
+    var params = {
+	"Bucket": this.bucket,
+	"Delete": {
+	    "Objects": allPossibleImages
+	}
+    };
+    this.s3.deleteObjects(params, function(err, data) {
+	if (err) {
+	    console.log("Error deleting S3 Ad image: " + err);
 	}
     });
 };

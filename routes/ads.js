@@ -73,7 +73,7 @@ exports.createAd = function(request, response) {
 			    if (file.isBase64) {
 				var ext = file.ext;
 				var key = adSpaceID + "_" + newAdID+ "." + ext;
-				s3.upload(file.body, key);
+				s3.upload(file.body, key, "image/" + ext);
 				params.Item["image"] = {
 				    "S": s3.getAdImageURL(adSpaceID,
 							  newAdID, ext)
@@ -198,7 +198,7 @@ exports.updateAd = function(request, response) {
 	    if (file.isBase64) {
 		var ext = file.ext;
 		var key = adSpaceID + "_" + adID + "." + ext;
-		s3.upload(file.body, key);
+		s3.upload(file.body, key, "image/" + ext);
 		params.AttributeUpdates[attr] = {
 		    "Value": {
 			"S": s3.getAdImageURL(adSpaceID, adID, ext)
@@ -230,6 +230,7 @@ exports.updateAd = function(request, response) {
  */
 exports.deleteAd = function(request, response) {
     var db = response.app.get("db");
+    var s3 = response.app.get("s3");
     var params = {
 	"TableName": response.app.get("ads_table_name"),
 	"Key": {
@@ -241,6 +242,7 @@ exports.deleteAd = function(request, response) {
 	    }
 	}
     };
+    // Remove the item from the database.
     db.deleteItem(params, function(err, data) {
 	if (err) {
 	    response.send(err);
@@ -249,6 +251,8 @@ exports.deleteAd = function(request, response) {
 			    "message": "Success"} );
 	}
     });
+    // Finally, delete any image the ad may reference.
+    s3.deleteAdImage(request.params.adspace_id, request.params.ad_id);
 };
 
 /**
