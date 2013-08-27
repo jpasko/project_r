@@ -298,16 +298,6 @@ exports._adSpaceParams = function(tableName, adSpaceID) {
     };
 };
 
-// TEST
-exports.test = function(request, response) {
-    var test = request.body;
-    var params = {};
-    for (var attr in test) {
-	params[attr] = {"S": test[attr]};
-    }
-    response.send(params);
-};
-
 /**
  * Extracts the metadata from the Base64 encoded data and returns an object
  * containing the metadata and data.

@@ -157,9 +157,6 @@ function init() {
     // Collect an email.
     app.post("/email", landing.collectEmail);
 
-    // TEST
-    app.post("/test", ads.test);
-
     // =========================================================================
     // END URL routing.
     // =========================================================================
