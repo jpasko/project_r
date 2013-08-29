@@ -1,5 +1,5 @@
 /**
- * Node.js server for AdCrafted.
+ * Master Node.js server for AdCrafted.
  *
  * Currently, 3 environments are supported.
  *
@@ -24,7 +24,6 @@
  * Author: James Pasko (james@adcrafted.com).
  */
 
-
 /**
  * Include modules here.
  */
@@ -35,9 +34,9 @@ var express    = require("express")
   , website    = require("./routes/website")
   , landing    = require("./routes/landing")
   , AWSManager = require("./utils/aws-manager")
-  , http       = require("http")
   , path       = require("path")
-  , async      = require("async");
+  , api        = require("./apps/api/api")
+  , manage     = require("./apps/manage/manage");
 
 /**
  * Express application.
@@ -48,28 +47,40 @@ var app = express();
  * Environment-specific Express application configuration.
  */
 app.configure("local", function() {
-    console.log("Using local settings.");
+    console.log("Using local settings for Default Application.");
+    app.use(express.logger("dev"));
+    // AWS configuration and AWS-related settings.
     AWS.config.loadFromPath("./.local/credentials.json");
     app.set("s3_bucket", "project-r");
     app.set("adspace_table_name", "AdSpace-dev");
     app.set("ads_table_name", "Ads-dev");
-    app.use(express.logger("dev"));
+    // Subdomains for the API and the management application.
+    app.use(express.vhost("api.test.com", api.app));
+    app.use(express.vhost("manage.test.com", manage.app));
 });
 app.configure("development", function() {
     console.log("Using development settings.");
+    app.use(express.logger("dev"));
+    // AWS configuration and AWS-related settings.
     AWS.config.update({region: 'us-east-1'});
     app.set("s3_bucket", "project-r");
     app.set("adspace_table_name", "AdSpace-dev");
     app.set("ads_table_name", "Ads-dev");
-    app.use(express.logger("dev"));
+    // Subdomains for the API and the management application.
+    app.use(express.vhost("api.adcrafted.com", api.app));
+    app.use(express.vhost("manage.adcrafted.com", manage.app));
 });
 app.configure("production", function() {
     console.log("Using production settings.");
+    app.use(express.logger("tiny"));
+    // AWS configuration and AWS-related settings.
     AWS.config.update({region: 'us-east-1'});
     app.set("s3_bucket", "project-r");
     app.set("adspace_table_name", "AdSpace-dev");
     app.set("ads_table_name", "Ads-dev");
-    app.use(express.logger("tiny"));
+    // Subdomains for the API and the management application.
+    app.use(express.vhost("api.adcrafted.com", api.app));
+    app.use(express.vhost("manage.adcrafted.com", manage.app));
 });
 
 /**
@@ -85,17 +96,24 @@ app.configure(function() {
     app.set("views", __dirname + "/views");
     app.set("view engine", "jade");
     app.set("email_table", "AdCrafted-emails");
-    app.set("db", new AWS.DynamoDB());
-    app.set("s3", new AWSManager.S3(new AWS.S3(), app.get("s3_bucket")));
+    // Create a DynamoDB management instance and share among the applications.
+    var db = new AWS.DynamoDB();
+    app.set("db", db);
+    api.app.set("db", db);
+    manage.app.set("db", db);
+    // Create an S3 management instance and share among the applications.
+    var s3_SDK = new AWS.S3();
+    app.set("s3", new AWSManager.S3(s3_SDK, app.get("s3_bucket")));
+    api.app.set("s3", new AWSManager.S3(s3_SDK, api.app.get("s3_bucket")));
+    manage.app.set("s3", new AWSManager.S3(s3_SDK, manage.app.get("s3_bucket")));
     // Error handler.
     app.use(function(err, request, response, next){
 	console.error(err.stack);
-	response.send(500, '500 - Error.');
+	response.send(500, "500 - Internal server error");
     });
     // 404 handler.
     app.use(function(request, response, next){
-	//response.send(404, '404 - Not Found.');
-	response.render('404', {title: '404'});
+	response.status(404).render("404", {title: "Page Not Found"});
     });
 });
 

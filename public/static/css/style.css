@@ -9,7 +9,7 @@ body {
     background-position: center 200px;
     background-color: rgb(63, 169, 245);
 }
-#tagline {
+#tagline, #not-found {
     color: black;
     font-size: 1.4em;
     text-align: center;
