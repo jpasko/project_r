@@ -28,6 +28,7 @@
  * Include modules here.
  */
 var express  = require("express")
+  , path     = require("path")
   , ads      = require("./../../routes/ads")
   , adspaces = require("./../../routes/adspaces");
 
@@ -67,6 +68,7 @@ app.configure(function() {
     app.use(express.methodOverride());
     app.use(app.router);
     app.use(express.compress());
+    app.use(express.static(path.join(__dirname, "./public")));
     // Error handler.
     app.use(function(err, request, response, next){
 	console.error(err.stack);
