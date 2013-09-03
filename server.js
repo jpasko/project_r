@@ -59,8 +59,9 @@ app.configure("development", function() {
     // AWS configuration and AWS-related settings.
     AWS.config.update({region: 'us-east-1'});
     // Subdomains for the API and the management application.
-    app.use(express.vhost("api.adcrafted.com", api.app));
-    app.use(express.vhost("manage.adcrafted.com", manage.app));
+    app.use(express.vhost("api.adcrafted-dev.elasticbeanstalk.com", api.app));
+    app.use(
+	express.vhost("manage.adcrafted-dev.elasticbeanstalk.com", manage.app));
 });
 app.configure("production", function() {
     console.log("Using production settings.");
