@@ -49,7 +49,6 @@ var app = express();
 app.configure("local", function() {
     console.log("Using local settings for Default Application.");
     app.use(express.logger("dev"));
-    app.use(express.static(path.join(__dirname, "public")));
     // AWS configuration and AWS-related settings.
     AWS.config.loadFromPath("./.local/credentials.json");
     app.set("s3_bucket", "project-r");
@@ -93,6 +92,7 @@ app.configure(function() {
     app.use(express.methodOverride());
     app.use(app.router);
     app.use(express.compress());
+    app.use(express.static(path.join(__dirname, "public")));
     app.set("views", __dirname + "/views");
     app.set("view engine", "jade");
     app.set("email_table", "AdCrafted-emails");
