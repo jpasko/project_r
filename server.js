@@ -29,8 +29,6 @@
  */
 var express    = require("express")
   , AWS        = require("aws-sdk")
-  , ads        = require("./routes/ads")
-  , adspaces   = require("./routes/adspaces")
   , website    = require("./routes/website")
   , landing    = require("./routes/landing")
   , AWSManager = require("./utils/aws-manager")
@@ -51,9 +49,6 @@ app.configure("local", function() {
     app.use(express.logger("dev"));
     // AWS configuration and AWS-related settings.
     AWS.config.loadFromPath("./.local/credentials.json");
-    app.set("s3_bucket", "project-r");
-    app.set("adspace_table_name", "AdSpace-dev");
-    app.set("ads_table_name", "Ads-dev");
     // Subdomains for the API and the management application.
     app.use(express.vhost("api.test.com", api.app));
     app.use(express.vhost("manage.test.com", manage.app));
@@ -63,9 +58,6 @@ app.configure("development", function() {
     app.use(express.logger("dev"));
     // AWS configuration and AWS-related settings.
     AWS.config.update({region: 'us-east-1'});
-    app.set("s3_bucket", "project-r");
-    app.set("adspace_table_name", "AdSpace-dev");
-    app.set("ads_table_name", "Ads-dev");
     // Subdomains for the API and the management application.
     app.use(express.vhost("api.adcrafted.com", api.app));
     app.use(express.vhost("manage.adcrafted.com", manage.app));
@@ -75,9 +67,6 @@ app.configure("production", function() {
     app.use(express.logger("tiny"));
     // AWS configuration and AWS-related settings.
     AWS.config.update({region: 'us-east-1'});
-    app.set("s3_bucket", "project-r");
-    app.set("adspace_table_name", "AdSpace-dev");
-    app.set("ads_table_name", "Ads-dev");
     // Subdomains for the API and the management application.
     app.use(express.vhost("api.adcrafted.com", api.app));
     app.use(express.vhost("manage.adcrafted.com", manage.app));
@@ -103,7 +92,6 @@ app.configure(function() {
     manage.app.set("db", db);
     // Create an S3 management instance and share among the applications.
     var s3_SDK = new AWS.S3();
-    app.set("s3", new AWSManager.S3(s3_SDK, app.get("s3_bucket")));
     api.app.set("s3", new AWSManager.S3(s3_SDK, api.app.get("s3_bucket")));
     manage.app.set("s3", new AWSManager.S3(s3_SDK, manage.app.get("s3_bucket")));
     // Error handler.
@@ -128,49 +116,9 @@ function init() {
     // Render the landing page.
     app.get("/", website.index);
 
-    // NOTE: The app also currently serves a UI demo at /demo. The demo is an
-    // Angular.js client of the following REST API.
-
-    // =========================================================================
-    // The REST API.
-    // =========================================================================
-
-    // CREATE a new AdSpace.
-    app.post("/api/adspace", adspaces.createAdSpace);
-
-    // RETRIEVE all AdSpaces.
-    app.get("/api/adspace", adspaces.getAllAdSpaces);
-
-    // RETRIEVE a single AdSpace.
-    app.get("/api/adspace/:adspace_id", adspaces.getAdSpace);
-
-    // UPDATE an AdSpace.
-    app.put("/api/adspace/:adspace_id", adspaces.updateAdSpace);
-
-    // DELETE an AdSpace and all ads it may reference.
-    app.del("/api/adspace/:adspace_id", adspaces.deleteAdSpace);
-
-    // CREATE an ad in the specified AdSpace.
-    app.post("/api/adspace/:adspace_id/ad", ads.createAd);
-
-    // RETRIEVE all ads within the specified AdSpace.
-    app.get("/api/adspace/:adspace_id/ad", ads.getAllAds);
-
-    // RETRIEVE a single ad from the specified AdSpace.
-    app.get("/api/adspace/:adspace_id/ad/:ad_id", ads.getAd);
-
-    // UPDATE an ad.
-    app.put("/api/adspace/:adspace_id/ad/:ad_id", ads.updateAd);
-
-    // DELETE an ad without deleting the AdSpace.
-    app.del("/api/adspace/:adspace_id/ad/:ad_id", ads.deleteAd);
-
     // =========================================================================
     // Miscellaneous URLs.
     // =========================================================================
-
-    // RETRIEVE a random ad from the specified AdSpace.
-    app.get("/api/adspace/:adspace_id/random", ads.getAd);
 
     // Collect an email.
     app.post("/email", landing.collectEmail);
