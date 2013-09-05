@@ -31,7 +31,7 @@
   <div class="col-md-3">
     <img ng-src="{{AdSpace.image}}" fallback-src="http://placehold.it/240x240" class="img-rounded adspace-img">
   </div>
-  <div class="col-md-5">
+  <div class="col-md-4">
     <div class="adspace-information">
       <p><strong>{{AdSpace.title}}</strong></p>
       <p>
@@ -39,12 +39,12 @@
       </p>
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-5">
     <div class="adspace-information">
-      <p><strong>ID: </strong>{{AdSpace.AdSpaceID}}</p>
+      <p><strong>ID: </strong><code>{{AdSpace.AdSpaceID}}</code></p>
       <p><strong>Created: </strong>{{AdSpace.date | date:'longDate'}}</p>
       <p><strong>Publisher: </strong>{{AdSpace.publisher}}</p>
-      <p><strong>Publisher ID: </strong>{{AdSpace.publisherID}}</p>
+      <p><strong>Publisher ID: </strong><code>{{AdSpace.publisherID}}</code></p>
       <p><strong>Number of ads: </strong>{{AdSpace.numAds}}</p>
       <p>
 	<strong>Tags: </strong>

@@ -45,7 +45,6 @@ S3.prototype.upload = function(body, key, contentType) {
 /**
  * Deletes all possible images for the AdSpace.
  * @param {number} adSpaceID.
- * @param {number} adID.
  * @param {string} ext.
  */
 S3.prototype.deleteAdSpaceImage = function(adSpaceID) {
@@ -113,7 +112,7 @@ S3.prototype.getAdSpaceImageURL = function(adSpaceID, ext) {
  * @return {string} The url.
  */
 S3.prototype.getAdImageURL = function(adSpaceID, adID, ext) {
-    return "https://" + this.bucket + ".s3.amazonaws.com/" +
+    return "https://s3.amazonaws.com/" + this.bucket + "/" +
 	adSpaceID + "_" + adID + "." + ext;
 };
 
